@@ -14,4 +14,4 @@ before_install:
 # script section contains all commands to be executed to run the test suite:
 # If any of the commands result in a status of other than 0, Travis assumes the build or test suite failed.
 script: 
-  - docker run brentgrammer/docker-travisCI-app npm run test -- --coverage
+  - docker run brentgrammer/docker-travisci-app npm run test -- --coverage
