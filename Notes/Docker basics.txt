@@ -1,0 +1,53 @@
+
+
+CONTAINER: Program with it's own isolated set of hardware resource (own space of memory, hard drive space, networking technology, etc.)
+
+IMAGE: A single file with all the dependencies and configuration setup required to run a program.  An image can be thought of as a file system snapshot (a copy of a specific set of directories or files). 
+*An image also contains a startup command that is run after the container is created.
+
+Tools used with Docker in Windows/Mac etc.:
+
+Docker Client - the Docker CLI to enter commands through the terminal.  It is a portal to allow interaction with Docker Server.
+
+Docker Server - aka Docker Daemon.  Program that creates containers, images, uploading and downloading images, etc.  It runs beind the scenes.
+
+--------------------
+
+UNDERSTANDING A CONTAINER:
+
+Namespacing: isolating resources for a specific process or group of processes running in the OS. (i.e. segmenting hard drive space for a particular program or programs).  this can be used by the kernel of the os to redirect system calls or requests from processes for resources for example.
+
+Control Groups (cgroups): Used to limit the amount of resources allowed per process or processes.  i.e. limiting of the hard drive i/o, memory, cpu usage, bandwidth, etc.
+
+***Namespacing and Control Groups are specifically used by Linux OS kernels and not Windows or IOS.  Docker installs a Linux virtual machine on your computer with a Linux kernel to allocate resources and create containers using these features.
+
+* Container is just a specified and controlled group of resources on a machine assigned to a program or process.
+
+A program or process makes a system call to the kernel of the OS, and the kernel directs the call to a specific portion and area of resources on the machine designated to be dedicated and made available to that program.
+
+When an image is used to create a container:
+
+-The kernel of the OS sets aside an assigned amount of physical resources for the image (i.e. small part of the hard drive) and the image files and directories are copied to those resources.  The image has a startup command that starts the copy of program(s) it has in it's file system snapshot (copy of files and directories it contains) and an instance of those process(es) are started and the sectioned off machine resources are allocated to them.  
+
+CONTAINER LIFECYCLE:
+
+-The container is created (either with docker run or docker create in the cli) and the files and folders in the image are prepped and copied to the hard drive etc.
+
+-The container is then start (auto with docker run or manually with docker start) and the default startup command is run if it not overwritten.
+
+--------------------
+
+LINUX ENVIRONMENT:
+
+-Every container is running inside a Linux environment in the virtual machine setup by Docker for Windows.
+
+Every running process in linux has 3 channels of communication attached to it:
+
+STDIN (Standard In) - used to communicate info into the process (i.e. stuff you type is sent to the process through this channel)
+
+STDOUT (Standard Out) - channel used to send output (i.e. what you see on your screen from the process)
+
+STDERR (Standard Error) - if there is an error in the process this channel is used to send the info to the screen.
+
+The -it flag on docker exec for example says to attach what is being typed in the terminal to the STDIN channel of the process (-i flag), the -t part ensures that the output from the STDOUT channel of the process is formatted on your screen properly.
+

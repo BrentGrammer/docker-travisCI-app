@@ -1,0 +1,33 @@
+PORT MAPPING
+
+*By default no traffic coming to your localhost computer is getting sent to any container.
+
+-The container has some ports it can listen on, but the localhost network does not re-direct incoming calls to them by default.
+
+A Port Mapping will forward incoming request calls made to a particular port on the host network to a port on the container.
+
+Note: A docker container can make requests on it's own to the outside world and does not need port mapping for outgoing requests.
+
+**Port mapping is set at run-time - it is only set when the container is started and not set in the Dockerfile, but with the $ docker run command with a -p flag.
+
+Syntax: $ docker run -p <localhostPort>:<containerPort> <imageName>
+
+Ex: $ docker run -p 8080:8080 brentgrammer/node-example
+
+NOTE: The port of the host and the port set to forward to on the container do not have to be the same and this is common in production.
+
+Ex: ... -p 5000:8080 ...
+
+-You can change the port you are forwarding to on the container, but it must match the port you are listening for in the container (i.e. in the app.listen(<port>) call on your express server).
+
+============
+
+TROUBLESHOOTING:
+
+-If you get an I/O error when trying to use -p flag, just try restarting Docker.
+
+
+
+
+
+

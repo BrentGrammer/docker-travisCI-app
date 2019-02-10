@@ -1,0 +1,54 @@
+TESTING WITH DOCKER AND TRAVIS CI:
+
+-To run tests in the terminal for the container:
+  $ docker build -f Dockerfile.dev .
+  $ docker run -it <containerId> npm run tests
+  // the command at the end overrides the command set in the dockerfile
+  // add the -it flag to connect to the stdin channel of the container so you're keypresses are received by the container 
+     to rerun tests etc.
+
+
+To use docker-compose to set testing env up and get updates to tests:
+
+2 Ways:
+-Attach to the existing service (container) specified in Dockerfile
+PRO: you can access live keypresses to manipulate tests in the terminal
+CON: you have to remember the command and get the container id
+-Create a new service in the docker-compose file for mappping the volume to the test local files to get updates
+PRO: you don't need to remember commands
+CON: you can't manipulate tests as stdin is not available for the test service process and can't be attached to with this method.
+
+First Option (attach to the container):
+
+-start with docker-compose up
+-open second terminal and get running container with docker ps
+-execute a command with $ docker exec -it <containerId> npm run test
+// now updates to tests will automatically update.
+
+---
+
+Second Option (create additional service in docker-compose.yml file):
+
+-Create another service in the docker-compose.yml file whose sole purpose is to run the tests for the project:
+
+-Under services in the docker-compose.yml file add a new tests service:
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - .:/app
+    # this overrides the CMD in the Dockerfile - overwrite it with a test command:
+    command: ["npm", "run", "test"]
+
+-Then run $ docker-compose up --build
+*Note: add the --build to rebuild because sometimes Docker gets finnicky when new services are added.
+
+The disadvantage to this approach is that you don't have access to the STDIN channel to the container to enter 
+commands to rerun tests etc.
+
+- You cannot use docker attach because it only attaches to the stdin of the primary process of the container (the
+npm process) and not a secondary process (the test process)
+
+

@@ -1,0 +1,130 @@
+DOCKER COMPOSE:
+
+$ docker-compose
+
+-A separate CLI that is installed with Docker for connecting and networking separate containers.
+
+-Allows the running of multiple containers at the same time and connect them with some networking
+
+-Automates an reduces the need to type repetitive and long commands for starting up a container (i.e. docker run... docker run -p... etc.)
+
+**The purpose of docker-compose is to assemble a list of Docker CLI commands in a yaml file (docker-compose.yml).  The Yml file is fed to the Docker-compose CLI which parses it and then it creates the containers and networking specified.
+
+------
+
+Example connecting Redis container with a node app container:
+
+1) Tell docker-compose to create a container using the Redis image pulled from Dockerhub
+2) Tell docker-compose to build and create a node app container using a Dockerfile created by you.
+
+***NOTE: just by creating multiple containers with docker-compose.yml config under services - they will automatically have free access to each other and be on the same network.
+
+*You typically connect containers in your code by referencing the service name defined in the docker-compose.yml file as the connection string.
+
+---------
+
+CREATE A DOCKER COMPOSE FILE:
+
+1) in root project folder, create a docker-compose.yml file.
+
+2) first specify a version of docker-compose to use:
+   version: '3'
+3) specify services (these are services that take the form of docker containers) and the image pulled from DockerHub used to build the container:
+  services:
+    service-name:
+      image: 'imagename'
+
+4) for container services that need to be built with a Dockerfile, use the build field and specify the current directory to locate the Dockerfile:
+
+map the ports on your machine to the docker container ports with the ports: field (use a dash - in yml files to specify an array - you can map multiple ports for example).
+
+  services:
+    redis-server:
+      image: "redis"
+    node-app:
+      build: .
+      ports:
+        - "8081:8081"
+
+**The services defined are automatically placed in a network by docker-compose.  You can refer to and connect the node-app to another service by referring to it's name.
+
+Ex in node app to connect to redis container:
+  const client = redis.createClient({
+    host: 'redis-server'
+  });
+
+**the client will make a connection request to 'redis-server' and docker-compose will catch this and send it to the redis-server service container and connect it.
+(normally you would pass in an http address etc.)
+
+=============
+
+DOCKER COMPOSE COMMANDS:
+
+*These need to be run in the project folder root with the docker-compose.yml file
+
+$ docker-compose up
+// runs an image (looks for the docker-compose.yml file to get the image)
+
+$ docker-compose up -d 
+// run containers in the background with the -d flag
+
+$ docker-compose down
+// stop all containers
+
+$ docker-compose build
+// rebuild and run the containers to get latest 
+// run this when you make changes to files
+Note this is change from docker-compose --build
+
+$ docker-compose up --build
+// same as above
+
+$ docker-compose ps
+// lists running containers - needs to be run in the same dir as docker-compose.yml
+
+=================
+
+DEALING WITH CRASHED CONTAINERS:
+
+-Containers that crash due to errors can be automatically restarted with a restart policy.
+-These Policies will also be triggered if the container stops.
+
+Restart Policies:
+"no"           - never restart the container on stop or crash
+always         - restart if container stops for any reason
+on-failure     - restart only if it stops with an error code
+unless-stopped - always restart unless it is manually stopped
+
+Note: "no" policy must be in quotes since it is a key word in yml files.
+
+ - Use always policy for a container service like a web server that you always need running
+ - Use on-failure policy for a worker process of some sort so that the container service is not restarted automatically when completing it's job and stopping.
+
+Define a restart policy in the docker-compose.yml file under the service entry:
+
+Ex:
+
+version: '3'
+services:
+  redis-server:
+    image: 'redis'
+  node-app: 
+    restart: on-failure
+    build: .
+    ports: 
+      - "4001:8081"
+
+Note: you can test restart policies by using process.exit(0) or process.exit(<error code>) in your main handler in the express server to simulate a crash with an exit code.  0 means program exited purposefully and everything is okay.  if there is another number passed in it is an error code.
+
+Ex in express main server.js file:
+
+const process = require('process');
+
+app.get ---
+  process.exit(0);
+
+
+
+
+
+

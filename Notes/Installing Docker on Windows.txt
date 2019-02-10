@@ -1,0 +1,25 @@
+
+1) Go to Docker website at docker.com and click get started.
+https://www.docker.com/get-started
+
+2) Download Docker for Windows. You need to sign in or register.
+
+Remember your Docker ID (this can be a made up username).
+
+DOCKER: brentgrammer, pass is regular root with cap mid letter and checkered number pattern with old address as second part (no last number)
+
+3) Run the executable file downloaded to install Docker. 
+
+*Use Linux containers! do not check the box to use windows containers.
+
+4) click the Docker for Windows icon on the desktop which will prompt you to restart your computer.  
+
+5) After restarting click on the icon again and login with your docker account info:
+
+DOCKER: brentgrammer, pass is regular root with cap mid letter and checkered number pattern with old address as second part (no last number)
+
+6) Start up a gitbash terminal and run $ docker version to check if it installed correctly.
+
+if you get docker information, it is installed.
+
+ 

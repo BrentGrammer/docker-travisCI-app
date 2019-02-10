@@ -1,0 +1,160 @@
+CREATING AN IMAGE WITH A  DOCKERFILE:
+
+-A dockerfile is a plain text file that has some configuration lines in it that describe what specific programs the container will contain and what it does when it starts up.
+
+-The dockerfile is passed to the Docker Client (CLI) through the docker build . command which is then passed it to the docker server.
+-Docker server takes the Dockerfile and the config lines in it and builds an image that can be used to start a container.
+
+BUILD PROCESS:
+
+*A key concept is that during the image build process, temporary containers are created with the RUN commands and images are created from them which can be built upon.
+
+Dockerfile STRUCTURE:
+
+-Specify a base image: a base image provides a starting point for building a custom image and comes with preinstalled programs that are useful to building the image you want to build. 
+
+-Run commands to install other programs or dependencies needed to create and execute the container
+
+-Specify a startup command that runs on bootup of the container.
+
+*Every line of config starts with an instruction (a single word that tells docker server what kind of operation to perform in preparing the image to create).  Then an argument is provided which customizes how the instruction is executed.
+
+i.e. FROM alpine <--FROM is the instruction
+
+Example Instructions:
+
+FROM - tells docker server to get a base image from docker hub
+RUN - tells docker server to run some command(s) inside the container while       preparing the img
+CMD - indicates what command to run on container startup formatted as an array of separate parts of the command
+
+NOTE: Docker caches the build steps in order so when the image is built again, as long as the order of the steps does not change, it will use the cached work done.  If the order changes or a new command is added, it will stop using the cache starting at the new line. 
+
+-----
+
+CREATING A DOCKERFILE:
+
+1) In your project root, create a plain file called Dockerfile (with no extension).
+
+2) Specify a base image, commands to install dependencies, and a startup command
+
+Ex:
+# Use existing docker image as base - NOTE: alpine versions are stripped down and don't have extra programs bundled in.
+FROM alpine
+
+# Download and install dependencies
+RUN apk add --update redis # apk is a program that comes with the alpine img and is useful to install redis
+
+# Startup command on container start
+CMD ["redis-server"]
+
+3) In a shell terminal inside your project root directory, run:
+
+ $ docker build .
+
+// The . at the end is the build context which is the folder path that contains the files and folders you want encapsulated in the container image.  Here it means everything in the current directory.
+
+4) you can then do $ docker run <containerid>
+
+or Create a tag with the -t flag so you don't have to remember the id (*Convention is to prefix any images you create with your docker id):
+
+$ docker build -t <yourDockerId>/<projectName>:<version> .
+
+Ex: $ docker build -t brentgrammer/redis:latest
+
+You can run it:  $ docker run brentgrammer/redis 
+// the latest version is used by default so you don't have to inclide it.
+Note: the tag is technically the version at the end and the rest of the name is the repository.
+
+-----
+
+DOCKERFILE FOR NODE APP:
+
+1) get a base image that has node preinstalled on it from Docker Hub:
+  -Go to Docker Hub site and click on explore and find the node image that says "Official".
+
+  -The tags section will indicate what version the image has installed.  If you need to install a specific version:
+  FROM node:6.14
+
+  (Syntax - FROM <respository>:<tag>)
+
+2) Copy all project files to the container fs with COPY <path relative to build context> <path on container>
+
+// the path to copy from is relative to the build context (the path specified in the $ docker build <context> command).  
+
+3) Install dependencies with npm (npm must be installed on the container) with RUN npm install
+
+4) Run start script as the CMD to run when image container is created and started.
+
+5) build the container with a -t tag.  
+$ docker build -t brentgrammer/node-project .
+
+//:latest is appended by default for the version
+
+
+Example:
+
+# alpine versions of images are barebones and only have the program installed and not addons. (npm is included in the alpine version of node)
+
+FROM node:alpine
+
+COPY ./ ./
+RUN npm install
+
+CMD npm ["npm", "start"]
+
+6) You can run with port mapping -p flag to forward requests to the host to the container port the express app is listening on in the container-
+
+$ docker run -p 8080:8080 brentgrammer/node-example
+
+---------------------
+
+WORKDIR
+
+BEST PRACTICE IS TO COPY FILES INTO A NESTED DIRECTORY:
+
+-You don't copy to the root of the container because you don't want files or folders to conflict.
+
+-User the WORKDIR statement in the Dockerfile to copy files relative to the directory specified instead of the root dir.
+Ex: WORKDIR /usr/app
+
+// Now the commands below this line will be run relative to this path
+Note: the usr/ folder is a good place to put an application on linux. 
+
+Ex:
+
+FROM node:alpine
+
+WORKDIR /usr/app
+
+COPY ./ ./
+
+RUN npm install
+
+CMD ["npm", "start"]
+
+====================
+
+PREVENTING UNECESSARY REBUILDS AND CACHE BUSTING:
+
+-If you change one file in the project you need to rebuild and run the image to get the change to be active.  This can lead to unnecessary rebuild steps like npm install if you only changed one other file. 
+
+-Docker will stop using the cache when it gets to the COPY ./ ./ command since one file has changed.  You can prevent this by making the npm install files cached by creating a separate COPY command before copying the rest of the files.
+
+COPY ./package.json ./
+RUN npm install
+COPY ./ ./
+
+// Now, the steps up to npm install will be cached and if you make a change to any other file, it will only copy the files and not run npm install again.
+
+
+
+===================
+
+TROUBLESHOOTING:
+
+-Input/Output error:
+$ docker stop $(docker ps -a -q)
+-then stop and restart docker on your computer.
+
+
+

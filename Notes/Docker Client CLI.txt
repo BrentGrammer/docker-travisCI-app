@@ -1,0 +1,150 @@
+The Docker client or CLI starts up when you enter a docker command into the terminal and is responsible for taking that command and communicating it to the Docker Server.
+
+---------
+
+CREATING AND STARTING A CONTAINER:
+
+$ docker run <imageName>
+
+-When this command is run, Docker Server will check to see if there is a local copy of the image, and if not it will go to Docker Hub to find it and download it saving it to the local image cache.
+
+*docker run is shorthand for 2 commands:
+ 
+$ docker create <image>
+// preps the filesystem and returns the container id
+
+$ docker start <image> -a <container id>
+// this runs the startup command for the image. the -a flag tells the cli to print out any output from the container program to the terminal
+
+-Then Docker Server creates a container from the image and runs the program contained in the image.
+
+DOCKER HUB: A public repository of docker images which you can download and run on your machine.
+
+Variations on docker run comand:
+
+-Each image has a default startup command that runs after the container is created. You can override the default command in docker run like so:
+
+$ docker run <image> <override command>
+
+Ex: $ docker run busy-box ls 
+
+// lists all folders in the container.
+
+----------
+
+START A STOPPED CONTAINER:
+
+$ docker start -a <container id>
+// get the id with $ docker ps --all
+
+------------
+
+STOP A CONTAINER
+
+$ docker stop <container id>
+// issues a SIGTERM (terminate signal) to the process which allows it some time to do clean up before shutting down. this is the recommended way to stop containers.
+
+$ docker kill <container id>
+// issues a SIGKILL (kill signal) to the container which commands the process to shut down immediately without clean up etc.  This is used when the container is frozen.
+
+STOP ALL CONTAINERS:
+
+$ docker stop $(docker ps -a -q)
+
+------------
+
+SHOW RUNNING CONTAINERS:
+
+$ docker ps
+
+// displays a list of running containers on your machines - useful for getting the id of a container to issue commands for it specifically.
+
+$ docker ps --all 
+
+//this shows all containers that have been created on your machine
+
+------------------
+
+DELETE ALL STOPPED CONTAINERS FROM COMPUTER:
+
+$ docker system prune
+
+------------------
+
+GET ALL OUTPUT FROM A CONTAINER THAT HAS RUN:
+
+$ docker logs <container id>
+
+// this does not start the container again - it just retrieves a record of what was output by the container.  useful for debugging.
+
+------------------
+
+EXECUTING AN ADDITIONAL COMMAND IN A CONTAINER:
+
+-This can be used to run another command in addition to the default startup command if needed i.e. to start redis-cli in addition to redis-server.
+
+**Need to prepend with winpty on windows when using bash
+
+$ docker exec -it <container id> <command>
+
+-Use this to open up another terminal while the container is running and shell into it.
+$ docker exec -it brentgrammer/my-container sh
+
+
+// the -it allows you to input into the container.  The -it flag is a combo of -i and -t and says to attach what is being typed in the terminal to the STDIN channel of the process (-i flag), the -t part ensures that the output from the STDOUT channel of the process is formatted on your screen properly.
+
+Ex: $ docker exec -it 174f4c4ecac1 redis-cli
+
+NOTE: on git bash in windows you need to prepend winpty to the line:
+Ex: $ winpty docker exec -it 174f4c4ecac1 redis-cli
+
+--
+
+OPEN A SHELL IN A CONTAINER:
+
+-Opening a shell in a container gives you full terminal access inside the context of the container and allows you to run commands without having to use docker exec -it over and over. You can run commands like ls or redis-cli and navigate throughout the container shell.
+Very useful for debugging
+
+$ docker exec -it <container id> sh
+
+// you may have to add winpty on windows to get -it to work:
+Ex: $ winpty docker exec -it 174f4c4ecac1 sh
+
+Note: sh is a shell command processor that comes with a lot of containers.  Other shell command processors could be powershell or bash.
+
+--
+
+START A CONTAINER AND ENTER INTO THE SHELL:
+
+-This is not common to do - usually you start the container and then use docker exec -it <containerid> sh to get into the shell.
+
+$ docker run -it <image> sh 
+
+Note: prepend winpty to the command on windows in gitbash
+
+// this creates and starts the container, attaches keyboard input to the STDIN channel of the process with -it flag and starts the sh shell command processor program.
+
+List contents of running container:
+
+# $ ls
+
+--
+
+EXITING A CONTAINER SHELL:
+
+-try Ctrl-C or Ctrl-D. or type exit
+
+---------------------
+
+CREATING A CUSTOM DOCKER IMG FROM A DOCKERFILE:
+
+$ docker build .
+
+// run this in the root project directory where the Dockerfile is.
+The . at the end is the build context which specified what files and folders you want encapsulated in the container image.
+
+Run a custom file instead of the Dockerfile (use -f to tell docker what file to use):
+
+$ docker build -f Dockerfile.dev .
+
+

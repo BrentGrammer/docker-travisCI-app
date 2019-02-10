@@ -1,0 +1,119 @@
+
+
+1) Create a Dockerfile.dev file to be run in development locally.  This file is used to build container in development
+
+Ex:
+
+FROM node:alpine
+
+WORKDIR '/app'
+
+COPY package.json .
+RUN npm install
+
+# copy all other files from project folder to working dir on container
+COPY . .
+
+**To run Dockerfile.dev (custom file name), use the -f flag
+
+$ docker build -f Dockerfile.dev .
+
+NOTE: you should delete the node_modules folder if present in the project folder so the Dockerfile.dev doesn't copy over the folder to the container.
+
+TROUBLESHOOTING:
+-If you get an I/O error when trying to use -p flag, just try restarting Docker.
+
+=========
+
+UPDATING CONTAINER WITH FILE CHANGES:
+
+-Normally updates to files will not be reflected unless you stop and rebuild the container.
+
+If you are running on Windows: Create-React-App has some issues detecting when files get changed on Windows based machines.  To fix this, please do the following:
+
+ -In the root project directory, create a file called .env
+
+ -Add the following text to the file and save it: CHOKIDAR_USEPOLLING=true
+
+ ----
+
+USE DOCKER VOLUMES TO GET UPDATES TO CODE CHANGES IN DEVELOPMENT ENVIRONMENT:
+
+-Use a volume as a placeholder or reference in the Dockerfile instead of copying over the contents of the source code to the container with COPY . .
+
+-The docker volume will be referencing and pointing to the folders/files on your local machine outside of the container.
+
+---- Using the docker CLI (this has problems in Windwos, just use a docker-compose file and docker-compose up cmd): ----------
+command to setup a volume for this purpose:
+
+$ docker run -p 3000:3000 -v /app/node_modules -v $(pwd):/app <container_id>
+
+// -v sets up a volume
+// $(pwd):/app maps the present working dir on your local machine files and map it to the app folder in the container.
+
+*The colon means to map what is on the right in the container to what is outside the container on the left.
+
+-v <mapToThisoutsideFolder>:<mapThisFolderInsideContainerToOutiside>
+
+*When there is no colon in syntax args after -v, that means you use that value as the placeholder and do not map it to anything outside of the container
+-v <doNotMapThisFolderInContainer>
+
+*You need the -v /app/node_modules part of the command to tell Docker not to map that folder to the local folder and just denotes a 
+placeholder saying that folder will exist, but don't map it to anything outside the container locally (because the local folder may overwrite
+the node_modules in the container which you don't want).  This prevents errors when the docker build occurs if the build tries to 
+map node_modules to the local folder and overwrite the container folder or if the local folder doesn't exist 
+
+TROUBLESHOOTING: If you get invalid Reference about a repository being uppercase error, make sure the PWD does not have any spaces 
+or uppercase letters in the folder name paths!
+
+-You may also get a package.json not found - this is a problem in Windows 10 environments and could be solved by using the 
+dockercompose build instead which is easier to manage.
+
+--------------------
+
+USING DOCKER-COMPOSE TO MAP THE VOLUME:
+
+**Do it this way - much easier:
+
+-In root project dir, create docker-compose.yml
+-Sepcify the Dockerfile.dev to use as the docker file under services-><name>->build->dockerfile property
+
+Example docker-compose.yml file:
+# Setup for development env mapping a volume to local folder to update code changes:
+version: '3'
+services:
+  web:
+    # specify an image
+    build: 
+      # context specified where the files and folders being pulled come from:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports: 
+      - "3000:3000"
+    volumes: 
+      # since there is no colon here, there is no mapping and the container will not try to map it to the local folder
+      - /app/node_modules
+      - .:/app
+  
+
+-Then run $ docker-compose up
+
+You can now go to the localhost:<port> specified and any saved changes to your local code files will be updated in the dev
+server and viewable in the browser.
+
+NOTE: Technically, the COPY . . in the Dockerfile.dev is not needed since the volume inside the container is referencing
+the local files it's mapped to on your machine environment outside the container.  Grider recommends to leave the command
+in in case you use the file to base a production Dockerfile off of in which case, the COPY command is needed
+
+-----
+
+Troubleshooting: If you get an error about a drive not being shared, open Docker settings from the desktop app and go to Shared Drives
+in the side menu and make sure your drive with the files is checked as shared.
+https://github.com/docker/compose/issues/4854
+
+-If you get an error about react scripts try removing node_modules local folder and reinstalling modules, then do
+docker-compose down and docker-compose up to rebuild the container.
+
+
+
+

@@ -1,0 +1,69 @@
+SETTING UP FOR PRODUCTION:
+
+-There is no devserver for the production container, and you need to have some way of serving the files in the production
+container to the browser client.  
+
+-Create a new Dockerfile which creates an image to run in the prod container with a production server - i.e. use nginx
+
+The new Dockerfile should:
+  -use node:alpine
+  -copy package.json files
+  -install dependencies
+  -run build process (i.e. npm run build)
+  -start the prod server (i.e. start nginx or npm run start to start node server with start script for that)
+
+*You will need 2 different base images if using nginx for the server (one for Node and one for Nginx).  
+You need to run a multi-step build process in the Dockerfile to accomplish this.
+
+You need two separate blocks of configuration in your Dockerfile:
+1) Build Phase (use Node image, copy package.json, install dependencies and create build with npm run build)
+2) Run Phase (Use nginx img, copy build folder from npm run build, start nginx)
+
+CREATE A MULTI-STEP BUILD PHASE:
+
+1) Create a new Dockerfile in the project (named 'Dockerfile')
+in the first line specifying the node image to use, add a 'as builder' line to it to specify that all of the commands and 
+lines associated with the node image will be referred to as builder for that build phase.
+
+Ex:
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json .
+RUN npm install
+COPY . .
+RUN npm run build
+
+2) start the second phase by specifying the new base image with another FROM statement.
+*A new FROM statement terminates the previous block and starts a new block to run in the Dockerfile.
+(you don't need to specify an as phase name here since you won't need to reference it)
+
+
+-COPY the build result from the builder phase with the --from=<phaseName> flag:
+COPY from=builder <folder in build container> <folder to copy to in new run container>
+Ex: COPY /app/build /usr/share/nginx/html
+// see the nginx dockerhub image docs which specify this folder your static files should be copied to which nginx will
+automatically look at to serve static files when it starts.
+
+After this second run phase completes the resulting files copied to the container will only be the build files.  Running the
+new FROM block for nginx/server run phase will ignore or dump the previous operations and files so only the build folder
+is copied to the production container after everything is complete.
+
+Example of complete multi-step Dockerfile:
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json .
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx
+COPY --from=builder /app/build /usr/shared/nginx/html
+
+-To test, open up terminal and run $ docker build .
+-run the container with port mapping:
+$ docker run -p 8080:80 <containerId>
+(nginx default port is 80, so map the port on your local machine to that port to access the nginx server running in the container)
+
+-There will be no feedback, just go to localhost:8080 in the browser and see your app being served by nginx
+
+
