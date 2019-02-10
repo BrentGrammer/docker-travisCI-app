@@ -9,7 +9,7 @@ services:
 # use it to build the Docker image to use for testing
 # tag the image with your docker username/nameOfRepo with -t to refer to it
 before_install:
-  - docker build -t brentgrammer/docker-travisCI-app -f Dockerfile.dev .
+  - docker build -t brentgrammer/docker-travisci-app -f Dockerfile.dev .
 
 # script section contains all commands to be executed to run the test suite:
 # If any of the commands result in a status of other than 0, Travis assumes the build or test suite failed.
