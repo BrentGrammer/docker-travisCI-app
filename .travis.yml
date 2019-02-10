@@ -1,0 +1,17 @@
+# gives Travis superuser permissions to execute a docker build (required)
+sudo: required
+# tell Travis a copy of docker is needed:
+services:
+  - docker
+
+# this is a series of commands executed before the tests are run:
+# this is a series of steps of operations to run either before running tests or deploying a project
+# use it to build the Docker image to use for testing
+# tag the image with your docker username/nameOfRepo with -t to refer to it
+before_install:
+  - docker build -t brentgrammer/docker-travisCI-app -f Dockerfile.dev .
+
+# script section contains all commands to be executed to run the test suite:
+# If any of the commands result in a status of other than 0, Travis assumes the build or test suite failed.
+script: 
+  - docker run brentgrammer/docker-travisCI-app npm run test -- --coverage
