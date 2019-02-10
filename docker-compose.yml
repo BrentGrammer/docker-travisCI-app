@@ -1,0 +1,24 @@
+# Setup for development env mapping a volume to local folder to update code changes:
+version: '3'
+services:
+  web:
+    # specify an image
+    build: 
+      # context specified where the files and folders being pulled come from:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports: 
+      - "3000:3000"
+    volumes: 
+      # since there is no colon here, there is no mapping and the container will not try to map it to the local folder
+      - /app/node_modules
+      - .:/app
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - .:/app
+    # this overrides the CMD in the Dockerfile - overwrite it with a test command:
+    command: ["npm", "run", "test"]
