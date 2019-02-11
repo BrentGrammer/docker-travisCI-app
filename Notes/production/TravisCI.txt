@@ -137,6 +137,27 @@ deploy:
     Note: The EXPOSE command does not do anything locally or in development.  AWS Elastic Beanstalk looks for this instruction
     in the Dockerfile when deploying to use it to map that port to outside the container to allow access.
 
+  5) Git add and commit all changes and push to master.  This should trigger Travis CI to run all tests and push the latest code
+  to the AWS S3 bucket and deploy it to Elastic Beanstalk.
+
+
+TROUBLESHOOTING:
+
+-If build still fails after exposing port 80 in Dockerfile:
+npm install command frequently times out on the t2.micro instance that we are using.  An easy fix is to bump up the instance 
+type that Elastic Beanstalk is using to a t2.small.
+
+Note that a t2.small is outside of the free tier, so you will pay a tiny bit of money (likely less than one dollar if you
+ leave it running for a few hours) for this instance.  Don't forget to close it down!  Directions for this are a few videos 
+ ahead in the lecture titled 'Environment Cleanup'.
+
+Fix Two:
+Try editing the 'COPY' line of your Dockerfile like so:
+
+COPY package*.json ./
+
+Sometimes AWS has a tough time with the '.' folder designation and prefers the long form ./
+
 
 
 
