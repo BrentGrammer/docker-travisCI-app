@@ -35,5 +35,100 @@ before_install:
 # script section contains all commands to be executed to run the test suite:
 # If any of the commands result in a status of other than 0, Travis assumes the build or test suite failed.
 script: 
-  - docker run brentgrammer/docker-travisCI-app npm run test -- --coverage
+  - docker run brentgrammer/docker-travisci-app npm run test -- --coverage
+  # ***NOTE: the flag must be all lowercase letters!
+
+-Now whenever you push to master on GitHub TravisCI will automatically run the scripts and commands in this config failed
+You can go to the travis CI website and signin to see your build status and result by finding the repo in the dashboard.
+
+--------------------
+
+DEPLOYING TO AWS:
+
+-Using ELASTIC BEANSTALK:
+-Elastic Beanstalk is an easy way to run one container in production (note: it is really only good for running one
+container - multiple instances can be spun up however)
+-When a user navigates to the URL of the app on Elastic Beanstalk, a load balancer automatically directs them to a virtual machine
+running the docker container with the app on it.  If traffic exeeds a threshhold, then another instance of the virtual machine 
+is created and the load balancer directs traffic accordingly.  This is built into Elastic Beanstalk.
+
+
+
+1) Login to AWS console and create a new application
+
+-Look up Elastic Beanstalk in the search bar and click Get Started to go to the dashboard.
+-Click on Create Application in the top right and name the app project
+-To deploy an app to Elastic Beanstalk you need an environment - for the app click Create One Now to create an environment
+-For serving static assets leave the option on Web Server Environment and click Select
+-Under Base Configuration section, go to Platform and select Docker from the dropdown.
+-You can leave defaults (sample application, etc) and click Create Environment
+ When the process is done a default URL can be found in the top right of the screen
+
+
+ 2) Configure TravisCI to deploy to AWS Elastic Beanstalk:
+
+ -In the .travis.yaml file add a section called 'deploy' to tell Travis CI how to deploy the app to AWS
+ -Specify the provider as elasticbeanstalk (Travis comes with prebuilt config for various hosts such as AWS, Digital Ocean etc)
+ -specify the region - this depends on where you originally created the Elastic Beanstalk instance (look at the url for your
+ app created in the AWS Elastic Beanstalk dashboard and find the region code in it just before the .elasticbeanstalk.com part
+  - copy that code to the yaml file under region:
+ and wrap it in quotes)
+ -specify the name of your app under app: (the name must be the same as the one you created in the elastic beanstalk create 
+ new app setup.  Check the name in the dashboard)
+ -specify the environment under the env: property - It is found in thw AWS dashboard for your app created(ex: 
+ All Applications->docker-travisci-app->DockerTravisciApp-env <----this is the environment name)
+
+ -Specify a bucket name: An S3 bucket is generated automatically for the app when creating it on Elastic Beanstalk.  When Travis
+ CI makes a successful build from a push it will zip up those files and send the zip to the S3 bucket specified and tell
+ AWS to serve those new files from that S3 bucket.  
+ To find the bucket_name, search for s3 in the search bar in AWS console and look for a bucket called "elasticbeanstalk-us-east-1-253160347010"
+ or something similar and click it - you can then copy and paste the name from the AWS bucket page to use in your .tavis.yml file
+ -specify a bucket_path - look in the s3 bucket and look for the name of your project (AWS stores all apps created with elastic
+ beanstalk in that s3 bucket under a namespace of the name of the app.)
+Note: the path or folder will not be there before the first deploy, so the default path you use is identical to the app name
+which is already in app: property in the .travis.yml file.
+-specify that deployment only occurs on a push to the master branch in the repo with the on: branch: fields
+Ex deploy block:
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-1"
+  app: "docker-travisci-app"
+  env: "DockerTravisciApp-env"
+  bucket_name: "elasticbeanstalk-us-east-1-253160347010"
+  bucket_path: "docker-travisci-app"
+  on:
+    branch: master
+
+3) Generate API keys for Travis CI to use to access your AWS account.
+  -Use the IAM service in AWS to generate keys that can be used by outside services
+
+  Go to services->IAM->Click Users on left->click Add User
+    Name the user (anything you want)
+    Click checkbox on programmatic access under Access type section
+    Click next: permissions
+    Select Attach Existing Policies Directly
+    Search for 'beanstalk' in the search bar to find permissions to give to the travis ci user to allow for deployment to it
+    (select the one that says 'Provides Full Access...' in the list and click the checkbox for it)
+    Click Next to get to review and click Create 
+    **You will now be shown keys - the secret key will only be visiible here one time, so you need to record it to use it later.
+    ****DO NOT PUT THE KEYS IN THE TRAVIS YAML FILE! Use Environment Secrets provided by Travis CI
+
+    Setting up Travis CI Environment Secrets:
+     -Go to your travis CI dashboard on the travis CI website->pull up your project->Go to More Options on the top right->Settings
+     Go down to the environment variables section to add your api keys which are encrypted on Travis CI
+     Enter the names for the keys i.e. AWS_ACCESS_KEY and AWS_SECRET_KEY etc. and make sure that display in build logs is unchecked!
+
+  Now in the .travis.yml file, specify access_key_id and secret_access_key to use the environment secrets set.
+
+  Ex:
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: 
+    secure: "$AWS_SECRET_KEY"
+
+  # NOTE: apparently you have to wrap the secret access key env variable in quotes for it to work...
+
+  
+
+
+
 

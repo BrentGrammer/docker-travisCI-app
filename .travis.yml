@@ -15,3 +15,25 @@ before_install:
 # If any of the commands result in a status of other than 0, Travis assumes the build or test suite failed.
 script: 
   - docker run brentgrammer/docker-travisci-app npm run test -- --coverage
+
+# Travis CI comes with builtin config for various hosts and providers to deploy to (i.e. digital ocean, AWS etc.)
+# region code is found in the elastic beanstalk url created by AWS
+# the app name is found in the dashboard - must match what you put in the create application process
+# the env is the environment name created found in the dashboard after your app name
+# bucket_name is the bucket created by elastic beanstalk automatically - go to s3 and look for elastic beanstalk bucket
+# bucket_path default is just the same as your app name (copy from app: field)
+# on: branch: tells Travis to only deploy to AWS if the push was to the master branch
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-1"
+  app: "docker-travisci-app"
+  env: "DockerTravisciApp-env"
+  bucket_name: "elasticbeanstalk-us-east-1-253160347010"
+  bucket_path: "docker-travisci-app"
+  on:
+    branch: master
+  # AWS access keys are generated on AWS with IAM service user for the app and stored in environment secrets on Travis CI:
+  # note the requirement of quotes around the secret key variable and extra secure field
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: 
+    secure: "$AWS_SECRET_KEY"
