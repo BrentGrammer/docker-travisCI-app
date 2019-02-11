@@ -17,7 +17,7 @@ class App extends Component {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Hey this is new text!
+            App Deployed on Elastic Beanstalk using Docker and TravisCI.
           </a>
         </header>
       </div>
