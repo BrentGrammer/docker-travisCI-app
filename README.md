@@ -11,3 +11,6 @@ See the /Notes folder for a rundown of the different processes and some self mad
 - Using Docker with docker-compose and docker-compose.yaml configuration
 - Setting up multi-phase build processes using Nginx for serving files
 - Integrating GitHub and Travis CI for automatic testing and deployment to AWS Elastic Beanstalk
+  - Generating API keys for AWS through an IAM user for the app
+  - Creating environment secrets on Travis CI for accessing API keys
+  - Exposing container ports on Elastic Beanstalk
