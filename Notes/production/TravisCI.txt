@@ -140,6 +140,20 @@ deploy:
   5) Git add and commit all changes and push to master.  This should trigger Travis CI to run all tests and push the latest code
   to the AWS S3 bucket and deploy it to Elastic Beanstalk.
 
+Git Workflow:
+
+-Create feature branch and do work
+-Push feature branch to GitHub
+-Submit Pull Request for review (during this time Travis CI will run checks)
+-Once checks pass and review is good, merge the pull request which will trigger Travis CI to deploy the app to AWS
+
+
+**Deleting the Application:
+
+Go to the Dashboard in Elastic Beanstalk and All Applications->Click Actions in top right->Delete application
+
+=============================
+
 
 TROUBLESHOOTING:
 
